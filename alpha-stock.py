@@ -37,8 +37,26 @@ dailyUrl = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=
 # batch url gives us current price
 batchUrl = "https://www.alphavantage.co/query?function=BATCH_STOCK_QUOTES&symbols={}&apikey={}".format(stocks, apiKey)
 
-u = urllib2.urlopen(batchUrl)
-query = u.read()
+lastResponse = open("/tmp/lastprice.json", "w")
+readFromCache = False
+try:
+   u = urllib2.urlopen(batchUrl)
+except urllib2.HTTPError as err:
+   if err.code == 503:
+      readFromCache = True
+   else:
+      raise
+
+apiDown = False
+if readFromCache == False: 
+   query = u.read()
+   lastResponse.write(query)
+   lastResponse.close()
+else:
+   responseCache = open("/tmp/lastprice.json", "r")
+   query = responseCache.read()
+   apiDown = True
+
 batchJson = json.loads(query)
 
 currentPrice = round(float(batchJson['Stock Quotes'][0]['2. price']), 2)
@@ -61,11 +79,14 @@ if foundOpenPrice == False:
    dailyJson = json.loads(query)
    openPrice = round(float(dailyJson['Time Series (Daily)'][todayString]['1. open']), 2)
    with open('/tmp/stock.txt', 'a') as stock_txt:
-      stock_txt.write("{}: {:,.2f}".format(todayString, openPrice))
+      stock_txt.write("{}: {:,.2f}\n".format(todayString, openPrice))
 
 priceChange = currentPrice - openPrice
 
-color = "red" if priceChange < 0 else "green"
+if apiDown == False: 
+   color = "red" if priceChange < 0 else "green"
+else:
+   color = "gray"
 
 print("{} ${:,.2f} {:+.2f} | color={}".format(
      stocks, currentPrice, priceChange, color
