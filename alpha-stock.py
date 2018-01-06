@@ -9,7 +9,7 @@
 import urllib2
 import json
 import time
-import datetime
+from datetime import date, timedelta
 import decimal
 import os
 from pprint import pprint
@@ -19,8 +19,10 @@ def touch(fname, times=None):
     with open(fname, 'a'):
         os.utime(fname, times)
 
-today = datetime.date.today()
+today = date.today()
+yesterday = date.today() - timedelta(1)
 todayString = str(today)
+yesterdayString = str(yesterday)
 
 ### REPLACE THESE VALUES
 stocks="STOCK_SYMBOL"
@@ -64,6 +66,26 @@ currentPrice = round(float(batchJson['Stock Quotes'][0]['2. price']), 2)
 if not os.path.isfile('/tmp/stock.txt'):
    touch('/tmp/stock.txt')
 
+foundYesterDaysPrice = False
+stockFile = open("/tmp/stock.txt", "r")
+for line in stockFile:
+   if yesterdayString in line:
+      price = line.split(':')
+      yesterdayPrice = round(float(price[1]), 2)
+      foundYesterdaysPrice = True
+
+stockFile.close()
+
+if foundYesterDaysPrice == False:
+   y = urllib2.urlopen(dailyUrl)
+   query = y.read()
+   dailyJson = json.loads(query)
+   closePrice = round(float(dailyJson['Time Series (Daily)'][yesterdayString]['4. close']), 2)
+   with open('/tmp/stock.txt', 'a') as stock_txt:
+      stock_txt.write("{}: {:,.2f}\n".format(yesterdayString, closePrice))
+
+stock_txt.close()
+
 foundOpenPrice = False
 # make only one call to dailyUrl every day, since it is slow
 stockFile = open("/tmp/stock.txt", "r")
@@ -81,7 +103,8 @@ if foundOpenPrice == False:
    with open('/tmp/stock.txt', 'a') as stock_txt:
       stock_txt.write("{}: {:,.2f}\n".format(todayString, openPrice))
 
-priceChange = currentPrice - openPrice
+#priceChange = currentPrice - openPrice
+priceChange = currentPrice - yesterdayPrice
 
 if apiDown == False: 
    color = "red" if priceChange < 0 else "green"
