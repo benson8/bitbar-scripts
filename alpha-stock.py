@@ -19,9 +19,17 @@ def touch(fname, times=None):
     with open(fname, 'a'):
         os.utime(fname, times)
 
-today = date.today()
-yesterday = date.today() - timedelta(1)
-todayString = str(today)
+if not os.path.isfile('/tmp/stock.txt'):
+   touch('/tmp/stock.txt')
+
+dayOfTheWeek = date.today().weekday()
+if dayOfTheWeek == 6:
+   today = date.today() - timedelta(2)
+   yesterday = date.today() - timedelta(3)
+else:
+   today = date.today()
+   yesterday = date.today() - timedelta(1)
+
 yesterdayString = str(yesterday)
 
 ### REPLACE THESE VALUES
@@ -63,10 +71,7 @@ batchJson = json.loads(query)
 
 currentPrice = round(float(batchJson['Stock Quotes'][0]['2. price']), 2)
 
-if not os.path.isfile('/tmp/stock.txt'):
-   touch('/tmp/stock.txt')
-
-foundYesterDaysPrice = False
+foundYesterdaysPrice = False
 stockFile = open("/tmp/stock.txt", "r")
 for line in stockFile:
    if yesterdayString in line:
@@ -76,34 +81,18 @@ for line in stockFile:
 
 stockFile.close()
 
-if foundYesterDaysPrice == False:
+# make only one call to dailyUrl every day, since it is slow
+if foundYesterdaysPrice == False:
    y = urllib2.urlopen(dailyUrl)
    query = y.read()
    dailyJson = json.loads(query)
    closePrice = round(float(dailyJson['Time Series (Daily)'][yesterdayString]['4. close']), 2)
    with open('/tmp/stock.txt', 'a') as stock_txt:
       stock_txt.write("{}: {:,.2f}\n".format(yesterdayString, closePrice))
-
-stock_txt.close()
+      stock_txt.close()
 
 foundOpenPrice = False
-# make only one call to dailyUrl every day, since it is slow
-stockFile = open("/tmp/stock.txt", "r")
-for line in stockFile:
-   if todayString in line:
-      price = line.split(':')
-      openPrice = round(float(price[1]), 2)
-      foundOpenPrice = True
 
-if foundOpenPrice == False:
-   y = urllib2.urlopen(dailyUrl)
-   query = y.read()
-   dailyJson = json.loads(query)
-   openPrice = round(float(dailyJson['Time Series (Daily)'][todayString]['1. open']), 2)
-   with open('/tmp/stock.txt', 'a') as stock_txt:
-      stock_txt.write("{}: {:,.2f}\n".format(todayString, openPrice))
-
-#priceChange = currentPrice - openPrice
 priceChange = currentPrice - yesterdayPrice
 
 if apiDown == False: 
