@@ -22,9 +22,16 @@ def touch(fname, times=None):
 if not os.path.isfile('/tmp/stock.txt'):
    touch('/tmp/stock.txt')
 
+# if on the weekend, reset to Friday for calculations
 dayOfTheWeek = date.today().weekday()
 if dayOfTheWeek == 6:
    today = date.today() - timedelta(2)
+   yesterday = date.today() - timedelta(3)
+elif dayOfTheWeek == 5:
+   today = date.today() - timedelta(1)
+   yesterday = date.today() - timedelta(2)
+elif dayOfTheWeek == 0:
+   today = date.today()
    yesterday = date.today() - timedelta(3)
 else:
    today = date.today()
