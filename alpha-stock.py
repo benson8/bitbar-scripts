@@ -9,9 +9,11 @@
 import urllib2
 import json
 import time
-from datetime import date, timedelta
+from datetime import date, timedelta, time
+from datetime import datetime as dt
 import decimal
 import os
+import sys
 from pprint import pprint
 
 # support for touching a file
@@ -44,12 +46,30 @@ stocks="STOCK_SYMBOL"
 apiKey="APIKEY"
 ###
 
+now = dt.now()
+nowTime = now.time()
+if nowTime <= time(8,30):
+   color = "gray"
+   stockFile = open("/tmp/stock.txt", "r")
+   yesterdayPrice = 0.00
+   for line in stockFile:
+      if yesterdayString in line:
+         price = line.split(':')
+         yesterdayPrice = round(float(price[1]), 2)
+         foundYesterdaysPrice = True
+   stockFile.close()
+   priceChange = 0.00
+   print("{} ${:,.2f} {:+.2f} | color={}".format(
+        stocks, yesterdayPrice, priceChange, color
+   ))
+   sys.exit(0)
+
 # Currently only supports one stock
 query = ""
 for i in stocks:
     query = i + "," + query
 
-# daily url gives us open price
+# daily url gives us yesterday's price
 dailyUrl = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={}&outputsize=compact&apikey={}".format(stocks, apiKey)
 # batch url gives us current price
 batchUrl = "https://www.alphavantage.co/query?function=BATCH_STOCK_QUOTES&symbols={}&apikey={}".format(stocks, apiKey)
