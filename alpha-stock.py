@@ -74,7 +74,6 @@ dailyUrl = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=
 # batch url gives us current price
 batchUrl = "https://www.alphavantage.co/query?function=BATCH_STOCK_QUOTES&symbols={}&apikey={}".format(stocks, apiKey)
 
-lastResponse = open("/tmp/lastprice.json", "w")
 readFromCache = False
 try:
    u = urllib2.urlopen(batchUrl)
@@ -87,6 +86,7 @@ except urllib2.HTTPError as err:
 apiDown = False
 if readFromCache == False: 
    query = u.read()
+   lastResponse = open("/tmp/lastprice.json", "w")
    lastResponse.write(query)
    lastResponse.close()
 else:
