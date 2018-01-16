@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 # <bitbar.title>Alpha Vantage Stock Ticker</bitbar.title>
 # <bitbar.version>0.1</bitbar.version>
@@ -6,6 +6,10 @@
 # <bitbar.author.github>benson8</bitbar.author.github>
 # <bitbar.desc>Provides a rotating stock ticker in your menu bar</bitbar.desc>
 # <bitbar.dependencies>python</bitbar.dependencies>
+#
+# requires installing 'holidays' package (`easy_install holidays` in my case)
+#
+
 import urllib2
 import json
 import time
@@ -15,6 +19,8 @@ import decimal
 import os
 import sys
 from pprint import pprint
+
+import holidays
 
 # support for touching a file
 def touch(fname, times=None):
@@ -26,6 +32,8 @@ if not os.path.isfile('/tmp/stock.txt'):
 
 # if on the weekend, reset to Friday for calculations
 dayOfTheWeek = date.today().weekday()
+yesterday = date.today() - timedelta(1)
+
 if dayOfTheWeek == 6:
    today = date.today() - timedelta(2)
    yesterday = date.today() - timedelta(3)
@@ -37,9 +45,15 @@ elif dayOfTheWeek == 0:
    yesterday = date.today() - timedelta(3)
 else:
    today = date.today()
-   yesterday = date.today() - timedelta(1)
 
 yesterdayString = str(yesterday)
+
+# if a stock market holiday, reset yesterday appropriately
+us_holidays = holidays.US()
+holidayName = us_holidays.get(yesterdayString)
+if holidayName:
+  yesterday = date.today() - timedelta(4)
+  yesterdayString = str(yesterday)
 
 ### REPLACE THESE VALUES
 stocks="STOCK_SYMBOL"
