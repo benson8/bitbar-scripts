@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 # <bitbar.title>Alpha Vantage Stock Ticker</bitbar.title>
 # <bitbar.version>0.1</bitbar.version>
@@ -10,7 +10,8 @@
 # requires installing 'holidays' package (`easy_install holidays` in my case)
 #
 
-import urllib2
+from urllib.request import urlopen
+#import urllib2
 import json
 import time
 from datetime import date, timedelta, time
@@ -90,8 +91,8 @@ batchUrl = "https://www.alphavantage.co/query?function=BATCH_STOCK_QUOTES&symbol
 
 readFromCache = False
 try:
-   u = urllib2.urlopen(batchUrl)
-except urllib2.HTTPError as err:
+   u = urlopen(batchUrl)
+except HTTPError as err:
    if err.code == 503:
       readFromCache = True
    else:
@@ -101,7 +102,7 @@ apiDown = False
 if readFromCache == False: 
    query = u.read()
    lastResponse = open("/tmp/lastprice.json", "w")
-   lastResponse.write(query)
+   lastResponse.write(str(query))
    lastResponse.close()
 else:
    responseCache = open("/tmp/lastprice.json", "r")
@@ -124,7 +125,7 @@ stockFile.close()
 
 # make only one call to dailyUrl every day, since it is slow
 if foundYesterdaysPrice == False:
-   y = urllib2.urlopen(dailyUrl)
+   y = urlopen(dailyUrl)
    query = y.read()
    dailyJson = json.loads(query)
    closePrice = round(float(dailyJson['Time Series (Daily)'][yesterdayString]['4. close']), 2)
